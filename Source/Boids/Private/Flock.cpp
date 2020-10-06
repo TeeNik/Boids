@@ -16,7 +16,12 @@ void AFlock::BeginPlay()
 
 	for(int i = 0; i < Num; ++i)
 	{
-		ABoid* boid = GetWorld()->SpawnActor<ABoid>(BoidBP, FVector(0, 0, 50), FRotator(), spawnParameters);
+
+		auto pos = FVector(FMath::RandRange(-Width / 2, Width / 2),
+			FMath::RandRange(-Height / 2, Height / 2), 50);
+
+		ABoid* boid = GetWorld()->SpawnActor<ABoid>(BoidBP, pos, FRotator(), spawnParameters);
+		boid->Setup(Width, Height);
 		boids.Add(boid);
 	}
 }

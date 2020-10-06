@@ -13,11 +13,17 @@ public:
 	ABoid();
 
 	void Run(const TArray<ABoid*>& boids);
-	
+	void Setup(float width, float height);
+
 	virtual void Tick(float DeltaTime) override;
 
 protected:
 	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxForce = 0.05f;
+	UPROPERTY(EditDefaultsOnly)
+	float MaxSpeed = 5.0f;
 
 private:
 	void ApplyForce(FVector force);
@@ -34,7 +40,8 @@ private:
 	FVector Acceleration;
 
 	float R = 2.0f;
-	float MaxForce = 0.03f;
-	float MaxSpeed = 2.0f;
+	
+	float Width;
+	float Height;
 
 };

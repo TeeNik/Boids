@@ -20,12 +20,14 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ABoid> BoidBP;
+	UPROPERTY(EditDefaultsOnly)
+	float Width = 2000;
+	UPROPERTY(EditDefaultsOnly)
+	float Height = 1500;
+	UPROPERTY(EditDefaultsOnly)
+	int Num = 30;
 
 private:
 	TArray<ABoid*> boids;
-	const int Num = 1;
-
-	float width = 2000;
-	float height = 1500;
 
 };

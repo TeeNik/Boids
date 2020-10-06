@@ -12,6 +12,7 @@ void ABoid::BeginPlay()
 
 	float angle = FMath::FRandRange(0, 3.14*2);
 	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), 0);
+	Velocity *= MaxSpeed;
 }
 
 void ABoid::Tick(float DeltaTime)
@@ -29,6 +30,12 @@ void ABoid::Run(const TArray<ABoid*>& boids)
 	Borders();
 }
 
+void ABoid::Setup(float width, float height)
+{
+	Width = width;
+	Height = height;
+}
+
 void ABoid::ApplyForce(FVector force)
 {
 	Acceleration += force;
@@ -40,9 +47,9 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	FVector ali = Align(boids);
 	FVector coh = Cohesion(boids);
 
-	sep *= 1.5f;
-	ali *= 1.0f;
-	coh *= 1.0f;
+	sep *= 2.5f;
+	ali *= 0.0f;
+	coh *= 0.0f;
 
 	ApplyForce(sep);
 	ApplyForce(ali);
@@ -55,6 +62,7 @@ void ABoid::Update()
 	Velocity += Acceleration;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
 	auto position = GetActorLocation();
+	//SetActorRotation(Acceleration.ToOrientationRotator());
 	SetActorLocation(position + Velocity);
 	Acceleration *= 0;
 }
@@ -73,14 +81,21 @@ FVector ABoid::Seek(FVector target)
 
 void ABoid::Borders()
 {
-	FVector position = GetActorLocation();
+	float halfWidth = Width / 2;
+	float halfHieght = Height / 2;
 
+	FVector position = GetActorLocation();
+	if (position.X < -halfWidth-R) position.X = halfWidth + R;
+	if (position.Y < -halfHieght -R) position.Y = halfHieght + R;
+	if (position.X > halfWidth + R) position.X = -halfWidth - R;
+	if (position.Y > halfHieght + R) position.Y = -halfHieght - R;
+	SetActorLocation(position);
 }
 
 FVector ABoid::Separate(const TArray<ABoid*>& boids)
 {
 	FVector position = GetActorLocation();
-	float desiredSeparation = 25.0f;
+	float desiredSeparation = 150.0f;
 	FVector steer;
 
 	for (ABoid* other : boids)
@@ -112,7 +127,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 
 FVector ABoid::Align(const TArray<ABoid*>& boids)
 {
-	float neighborDist = 50;
+	float neighborDist = 200;
 	FVector sum;
 	FVector position = GetActorLocation();
 
@@ -126,7 +141,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 	}
 
 	FVector steer;
-	if(boids.Num())
+	if(boids.Num() > 0)
 	{
 		sum /= boids.Num();
 		sum.Normalize();
@@ -139,7 +154,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 
 FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 {
-	float neighborDist = 50;
+	float neighborDist = 200;
 	FVector sum;
 	FVector position = GetActorLocation();
 
@@ -152,7 +167,7 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 		}
 	}
 
-	if(boids.Num())
+	if(boids.Num() > 0)
 	{
 		sum /= boids.Num();
 		return Seek(sum);
