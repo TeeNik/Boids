@@ -25,6 +25,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float MaxSpeed = 5.0f;
 
+	UPROPERTY(EditDefaultsOnly)
+	float SeparationMult = 5.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float AlignMult = 3.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float ApproachMult = 1.0f;
+
+	UPROPERTY(EditDefaultsOnly)
+	float SeparationDistance = 50.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float AlignDistance = 100.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float ApproachDistance = 100.0f;
+
 private:
 	void ApplyForce(FVector force);
 	void Flock(const TArray<ABoid*>& boids);

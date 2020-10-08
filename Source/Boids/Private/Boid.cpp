@@ -47,9 +47,9 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	FVector ali = Align(boids);
 	FVector coh = Cohesion(boids);
 
-	sep *= 2.5f;
-	ali *= 0.0f;
-	coh *= 0.0f;
+	sep *= SeparationMult;
+	ali *= AlignMult;
+	coh *= ApproachMult;
 
 	ApplyForce(sep);
 	ApplyForce(ali);
@@ -95,24 +95,25 @@ void ABoid::Borders()
 FVector ABoid::Separate(const TArray<ABoid*>& boids)
 {
 	FVector position = GetActorLocation();
-	float desiredSeparation = 150.0f;
 	FVector steer;
 
+	int count = 0;
 	for (ABoid* other : boids)
 	{
 		float d = FVector::Dist(position, other->GetActorLocation());
-		if(d > 0 && d < desiredSeparation)
+		if(d > 0 && d < SeparationDistance)
 		{
 			FVector diff = position - other->GetActorLocation();
 			diff.Normalize();
 			diff /= d;
 			steer += diff;
+			++count;
 		}
 	}
 
-	if(boids.Num() > 0)
+	if(count > 0)
 	{
-		steer /= boids.Num();
+		steer /= count;
 	}
 
 	if(steer.Size() > 0)
@@ -127,23 +128,24 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 
 FVector ABoid::Align(const TArray<ABoid*>& boids)
 {
-	float neighborDist = 200;
 	FVector sum;
 	FVector position = GetActorLocation();
 
+	int count = 0;
 	for(ABoid* other : boids)
 	{
 		float d = FVector::Dist(position, other->GetActorLocation());
-		if(d > 0 && d < neighborDist)
+		if(d > 0 && d < AlignDistance)
 		{
 			sum += other->Velocity;
+			++count;
 		}
 	}
 
 	FVector steer;
-	if(boids.Num() > 0)
+	if(count > 0)
 	{
-		sum /= boids.Num();
+		sum /= count;
 		sum.Normalize();
 		sum *= MaxSpeed;
 		steer = sum - Velocity;
@@ -154,22 +156,23 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 
 FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 {
-	float neighborDist = 200;
 	FVector sum;
 	FVector position = GetActorLocation();
 
+	int count = 0;
 	for(ABoid* other : boids)
 	{
 		float d = FVector::Dist(position, other->GetActorLocation());
-		if(d > 0 && d < neighborDist)
+		if(d > 0 && d < ApproachDistance)
 		{
 			sum += other->GetActorLocation();
+			++count;
 		}
 	}
 
-	if(boids.Num() > 0)
+	if(count > 0)
 	{
-		sum /= boids.Num();
+		sum /= count;
 		return Seek(sum);
 	}
 	return FVector::ZeroVector;
