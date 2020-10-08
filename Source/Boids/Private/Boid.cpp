@@ -62,8 +62,9 @@ void ABoid::Update()
 	Velocity += Acceleration;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
 	auto position = GetActorLocation();
-	//SetActorRotation(Acceleration.ToOrientationRotator());
-	SetActorLocation(position + Velocity);
+	auto newPosition = position + Velocity;
+	SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
+	SetActorLocation(newPosition);
 	Acceleration *= 0;
 }
 
