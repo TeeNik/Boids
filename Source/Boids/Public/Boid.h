@@ -15,8 +15,6 @@ public:
 	void Run(const TArray<ABoid*>& boids);
 	void Setup(float width, float height);
 
-	virtual void Tick(float DeltaTime) override;
-
 protected:
 	virtual void BeginPlay() override;
 

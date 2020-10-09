@@ -3,24 +3,14 @@
 
 ABoid::ABoid()
 {
-	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ABoid::BeginPlay()
 {
 	Super::BeginPlay();
 
-	float angle = FMath::FRandRange(0, 3.14*2);
 	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), 0);
 	Velocity *= MaxSpeed;
-}
-
-void ABoid::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	//auto position = GetActorLocation();
-	//SetActorLocation(position + FVector(1, 0, 0));
 }
 
 void ABoid::Run(const TArray<ABoid*>& boids)
@@ -121,7 +111,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 	{
 		steer.Normalize();
 		steer *= MaxSpeed;
-		steer /= Velocity;
+		steer -= Velocity;
 		steer = UKismetMathLibrary::ClampVectorSize(steer, 0, MaxForce);
 	}
 	return steer;
