@@ -15,8 +15,11 @@ public:
 	void Run(const TArray<ABoid*>& boids);
 	void Setup(float width, float height);
 
+	bool DrawDebug = false;
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(EditDefaultsOnly)
 	float MaxForce = 0.05f;

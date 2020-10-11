@@ -1,8 +1,10 @@
 #include "Boid.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 ABoid::ABoid()
 {
+	PrimaryActorTick.bCanEverTick = true;
 }
 
 void ABoid::BeginPlay()
@@ -11,6 +13,11 @@ void ABoid::BeginPlay()
 
 	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), 0);
 	Velocity *= MaxSpeed;
+}
+
+void ABoid::Tick(float DeltaSeconds)
+{
+
 }
 
 void ABoid::Run(const TArray<ABoid*>& boids)
@@ -41,6 +48,13 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	ali *= AlignMult;
 	coh *= ApproachMult;
 
+	if(DrawDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Separate: %s"), *sep.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Align: %s"), *ali.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Cohesion: %s"), *coh.ToString());
+	}
+
 	ApplyForce(sep);
 	ApplyForce(ali);
 	ApplyForce(coh);
@@ -51,11 +65,20 @@ void ABoid::Update()
 	Acceleration.Z = 0;
 	Velocity += Acceleration;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
+
 	auto position = GetActorLocation();
 	auto newPosition = position + Velocity;
 	SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
 	SetActorLocation(newPosition);
 	Acceleration *= 0;
+
+	if (DrawDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Velocity: %f"), Velocity.Size());
+
+		UKismetSystemLibrary::DrawDebugSphere(GetWorld(), GetActorLocation(),
+			ApproachDistance, 12, FLinearColor::Blue);
+	}
 }
 
 FVector ABoid::Seek(FVector target)
@@ -86,7 +109,7 @@ void ABoid::Borders()
 FVector ABoid::Separate(const TArray<ABoid*>& boids)
 {
 	FVector position = GetActorLocation();
-	FVector steer;
+	FVector steer(0,0,0);
 
 	int count = 0;
 	for (ABoid* other : boids)
@@ -119,7 +142,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 
 FVector ABoid::Align(const TArray<ABoid*>& boids)
 {
-	FVector sum;
+	FVector sum(0, 0, 0);
 	FVector position = GetActorLocation();
 
 	int count = 0;
@@ -133,7 +156,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 		}
 	}
 
-	FVector steer;
+	FVector steer(0, 0, 0);
 	if(count > 0)
 	{
 		sum /= count;
@@ -147,7 +170,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 
 FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 {
-	FVector sum;
+	FVector sum(0, 0, 0);
 	FVector position = GetActorLocation();
 
 	int count = 0;
