@@ -13,10 +13,13 @@ void ABoid::BeginPlay()
 
 	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), 0);
 	Velocity *= MaxSpeed;
+	//DrawDebug = true;
 }
 
 void ABoid::Tick(float DeltaSeconds)
 {
+	//Acceleration = GetActorForwardVector();
+	//Acceleration.Normalize();
 
 }
 
@@ -43,21 +46,21 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	FVector sep = Separate(boids);
 	FVector ali = Align(boids);
 	FVector coh = Cohesion(boids);
+	FVector obs = Obstacle();
 
 	sep *= SeparationMult;
 	ali *= AlignMult;
 	coh *= ApproachMult;
 
-	if(DrawDebug)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Separate: %s"), *sep.ToString());
-		UE_LOG(LogTemp, Log, TEXT("Align: %s"), *ali.ToString());
-		UE_LOG(LogTemp, Log, TEXT("Cohesion: %s"), *coh.ToString());
-	}
-
 	ApplyForce(sep);
 	ApplyForce(ali);
 	ApplyForce(coh);
+
+	if(SeeObstacle)
+	{
+		obs *= 6;
+		ApplyForce(obs);
+	}
 }
 
 void ABoid::Update()
@@ -66,19 +69,19 @@ void ABoid::Update()
 	Velocity += Acceleration;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
 
+	if (DrawDebug)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Acceleration: %s"), *Acceleration.ToString());
+
+		//UKismetSystemLibrary::DrawDebugSphere(GetWorld(), GetActorLocation(),
+		//	ApproachDistance, 12, FLinearColor::Blue);
+	}
+
 	auto position = GetActorLocation();
 	auto newPosition = position + Velocity;
 	SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
 	SetActorLocation(newPosition);
 	Acceleration *= 0;
-
-	if (DrawDebug)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Velocity: %f"), Velocity.Size());
-
-		UKismetSystemLibrary::DrawDebugSphere(GetWorld(), GetActorLocation(),
-			ApproachDistance, 12, FLinearColor::Blue);
-	}
 }
 
 FVector ABoid::Seek(FVector target)
@@ -109,7 +112,7 @@ void ABoid::Borders()
 FVector ABoid::Separate(const TArray<ABoid*>& boids)
 {
 	FVector position = GetActorLocation();
-	FVector steer(0,0,0);
+	FVector steer(0);
 
 	int count = 0;
 	for (ABoid* other : boids)
@@ -142,7 +145,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 
 FVector ABoid::Align(const TArray<ABoid*>& boids)
 {
-	FVector sum(0, 0, 0);
+	FVector sum(0);
 	FVector position = GetActorLocation();
 
 	int count = 0;
@@ -156,7 +159,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 		}
 	}
 
-	FVector steer(0, 0, 0);
+	FVector steer(0);
 	if(count > 0)
 	{
 		sum /= count;
@@ -170,7 +173,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 
 FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 {
-	FVector sum(0, 0, 0);
+	FVector sum(0);
 	FVector position = GetActorLocation();
 
 	int count = 0;
@@ -190,4 +193,63 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 		return Seek(sum);
 	}
 	return FVector::ZeroVector;
+}
+
+FVector ABoid::Obstacle()
+{
+	SeeObstacle = false;
+	float dist = 500;
+	FVector dir(0);
+
+	if (CheckAngle(dist, 0, dir))
+	{
+		SeeObstacle = true;
+		for (int i = 1; i < 6; ++i)
+		{
+			if(!CheckAngle(dist, 30 * i, dir))
+			{
+				break;
+			}
+			if(!CheckAngle(dist, -30 * i, dir))
+			{
+				break;
+			}
+		}
+	}
+
+	dir *= MaxSpeed;
+	dir -= Velocity;
+	dir = UKismetMathLibrary::ClampVectorSize(dir, 0, MaxForce);
+
+	return dir;
+}
+
+bool ABoid::CheckAngle(float dist, float angle, FVector& safeDir)
+{
+	float radians = angle / 180 * PI;
+	float x = dist * FMath::Cos(radians);
+	float y = dist * FMath::Sin(radians);
+
+	FVector start = GetActorLocation();
+	//FVector end = start + FVector(x, y, 0);
+	FVector end = start + GetActorForwardVector().RotateAngleAxis(angle, FVector::UpVector) * dist;
+
+	FCollisionQueryParams CollisionParams;
+	FHitResult hit;
+
+	bool result = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_WorldStatic, CollisionParams);
+	FColor color = result ? FColor::Red : FColor::Green;
+
+	if (DrawDebug)
+	{
+		UKismetSystemLibrary::DrawDebugLine(GetWorld(), start, end, color, 0, 5);
+	}
+
+	if(!result)
+	{
+		safeDir = end - start;
+		safeDir.Normalize();
+	}
+
+	return result;
 }

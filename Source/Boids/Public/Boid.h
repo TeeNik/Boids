@@ -50,6 +50,9 @@ private:
 	FVector Separate(const TArray<ABoid*>& boids);
 	FVector Align(const TArray<ABoid*>& boids);
 	FVector Cohesion(const TArray<ABoid*>& boids);
+	FVector Obstacle();
+
+	bool CheckAngle(float dist, float angle, FVector& safeDir);
 
 	FVector Velocity;
 	FVector Acceleration;
@@ -58,5 +61,7 @@ private:
 	
 	float Width;
 	float Height;
+
+	bool SeeObstacle;
 
 };
