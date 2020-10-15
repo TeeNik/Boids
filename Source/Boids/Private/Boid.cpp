@@ -51,16 +51,12 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	sep *= SeparationMult;
 	ali *= AlignMult;
 	coh *= ApproachMult;
+	obs *= ObstacleMult;
 
 	ApplyForce(sep);
 	ApplyForce(ali);
 	ApplyForce(coh);
-
-	if(SeeObstacle)
-	{
-		obs *= 6;
-		ApplyForce(obs);
-	}
+	ApplyForce(obs);
 }
 
 void ABoid::Update()
@@ -197,41 +193,28 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 
 FVector ABoid::Obstacle()
 {
-	SeeObstacle = false;
-	float dist = 500;
+	float dist = ObstacleDistance;
 	FVector dir(0);
 
 	if (CheckAngle(dist, 0, dir))
 	{
-		SeeObstacle = true;
 		for (int i = 1; i < 6; ++i)
 		{
-			if(!CheckAngle(dist, 30 * i, dir))
+			if(!CheckAngle(dist, 30 * i, dir) || !CheckAngle(dist, -30 * i, dir))
 			{
-				break;
-			}
-			if(!CheckAngle(dist, -30 * i, dir))
-			{
+				dir *= MaxSpeed;
+				dir -= Velocity;
+				dir = UKismetMathLibrary::ClampVectorSize(dir, 0, MaxForce);
 				break;
 			}
 		}
 	}
-
-	dir *= MaxSpeed;
-	dir -= Velocity;
-	dir = UKismetMathLibrary::ClampVectorSize(dir, 0, MaxForce);
-
 	return dir;
 }
 
 bool ABoid::CheckAngle(float dist, float angle, FVector& safeDir)
 {
-	float radians = angle / 180 * PI;
-	float x = dist * FMath::Cos(radians);
-	float y = dist * FMath::Sin(radians);
-
 	FVector start = GetActorLocation();
-	//FVector end = start + FVector(x, y, 0);
 	FVector end = start + GetActorForwardVector().RotateAngleAxis(angle, FVector::UpVector) * dist;
 
 	FCollisionQueryParams CollisionParams;

@@ -32,6 +32,8 @@ protected:
 	float AlignMult = 3.0f;
 	UPROPERTY(EditDefaultsOnly)
 	float ApproachMult = 1.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float ObstacleMult = 6.0f;
 
 	UPROPERTY(EditDefaultsOnly)
 	float SeparationDistance = 50.0f;
@@ -39,6 +41,8 @@ protected:
 	float AlignDistance = 100.0f;
 	UPROPERTY(EditDefaultsOnly)
 	float ApproachDistance = 100.0f;
+	UPROPERTY(EditDefaultsOnly)
+	float ObstacleDistance = 500.0f;
 
 private:
 	void ApplyForce(FVector force);
@@ -61,7 +65,4 @@ private:
 	
 	float Width;
 	float Height;
-
-	bool SeeObstacle;
-
 };
