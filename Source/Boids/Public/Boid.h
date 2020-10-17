@@ -13,18 +13,23 @@ public:
 	ABoid();
 
 	void Run(const TArray<ABoid*>& boids);
-	void Setup(float width, float height);
+	void Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions);
 
 	bool DrawDebug = false;
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaSeconds) override;
 
 	UPROPERTY(EditDefaultsOnly)
-	float MaxForce = 0.05f;
+	class UStaticMeshComponent* Mesh;
 	UPROPERTY(EditDefaultsOnly)
-	float MaxSpeed = 5.0f;
+	class USceneComponent* Root;
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditDefaultsOnly)
+	float MaxForce = 0.06f;
+	UPROPERTY(EditDefaultsOnly)
+	float MaxSpeed = 4.0f;
 
 	UPROPERTY(EditDefaultsOnly)
 	float SeparationMult = 5.0f;
@@ -44,6 +49,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	float ObstacleDistance = 500.0f;
 
+	UPROPERTY(EditDefaultsOnly)
+	bool BordersWarpAround = false;
+
 private:
 	void ApplyForce(FVector force);
 	void Flock(const TArray<ABoid*>& boids);
@@ -56,13 +64,16 @@ private:
 	FVector Cohesion(const TArray<ABoid*>& boids);
 	FVector Obstacle();
 
-	bool CheckAngle(float dist, float angle, FVector& safeDir);
+	bool CheckDirection(const FVector& dir);
 
 	FVector Velocity;
 	FVector Acceleration;
 
 	float R = 2.0f;
 	
-	float Width;
-	float Height;
+	FVector LowerBound;
+	FVector UpperBound;
+
+	TArray<FVector> Directions;
+
 };

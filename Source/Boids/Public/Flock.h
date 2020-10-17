@@ -27,7 +27,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	int Num = 30;
 
+	UPROPERTY(EditDefaultsOnly)
+	FVector LowerBound;
+	UPROPERTY(EditDefaultsOnly)
+	FVector UpperBound;
+
 private:
-	TArray<ABoid*> boids;
+	TArray<ABoid*> Boids;
+	
+	const int NumOfDirections = 300;
+	TArray<FVector> Directions;
+
+	void CalculateDirections();
 
 };

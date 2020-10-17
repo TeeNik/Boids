@@ -4,23 +4,20 @@
 
 ABoid::ABoid()
 {
-	PrimaryActorTick.bCanEverTick = true;
+	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
+	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+
+	RootComponent = Root;
+	Mesh->SetupAttachment(Root);
 }
 
 void ABoid::BeginPlay()
 {
 	Super::BeginPlay();
 
-	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), 0);
+	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), FMath::FRandRange(-1, 1));
 	Velocity *= MaxSpeed;
 	//DrawDebug = true;
-}
-
-void ABoid::Tick(float DeltaSeconds)
-{
-	//Acceleration = GetActorForwardVector();
-	//Acceleration.Normalize();
-
 }
 
 void ABoid::Run(const TArray<ABoid*>& boids)
@@ -30,10 +27,11 @@ void ABoid::Run(const TArray<ABoid*>& boids)
 	Borders();
 }
 
-void ABoid::Setup(float width, float height)
+void ABoid::Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions)
 {
-	Width = width;
-	Height = height;
+	LowerBound = lowerBound;
+	UpperBound = upperBound;
+	Directions = directions;
 }
 
 void ABoid::ApplyForce(FVector force)
@@ -61,17 +59,8 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 
 void ABoid::Update()
 {
-	Acceleration.Z = 0;
 	Velocity += Acceleration;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
-
-	if (DrawDebug)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Acceleration: %s"), *Acceleration.ToString());
-
-		//UKismetSystemLibrary::DrawDebugSphere(GetWorld(), GetActorLocation(),
-		//	ApproachDistance, 12, FLinearColor::Blue);
-	}
 
 	auto position = GetActorLocation();
 	auto newPosition = position + Velocity;
@@ -94,15 +83,17 @@ FVector ABoid::Seek(FVector target)
 
 void ABoid::Borders()
 {
-	float halfWidth = Width / 2;
-	float halfHieght = Height / 2;
-
-	FVector position = GetActorLocation();
-	if (position.X < -halfWidth-R) position.X = halfWidth + R;
-	if (position.Y < -halfHieght -R) position.Y = halfHieght + R;
-	if (position.X > halfWidth + R) position.X = -halfWidth - R;
-	if (position.Y > halfHieght + R) position.Y = -halfHieght - R;
-	SetActorLocation(position);
+	if(BordersWarpAround)
+	{
+		FVector position = GetActorLocation();
+		if (position.X < LowerBound.X - R) position.X = UpperBound.X - R;
+		if (position.Y < LowerBound.Y - R) position.Y = UpperBound.Y - R;
+		if (position.Z < LowerBound.Z - R) position.Z = UpperBound.Z - R;
+		if (position.X > UpperBound.X + R) position.X = LowerBound.X + R;
+		if (position.Y > UpperBound.Y + R) position.Y = LowerBound.Y - R;
+		if (position.Z > UpperBound.Z + R) position.Z = LowerBound.Z - R;
+		SetActorLocation(position);
+	}
 }
 
 FVector ABoid::Separate(const TArray<ABoid*>& boids)
@@ -193,29 +184,33 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 
 FVector ABoid::Obstacle()
 {
-	float dist = ObstacleDistance;
-	FVector dir(0);
+	FVector resultDir(0);
 
-	if (CheckAngle(dist, 0, dir))
+	if(CheckDirection(GetActorForwardVector()))
 	{
-		for (int i = 1; i < 6; ++i)
+		for (int i = 0; i < Directions.Num(); ++i)
 		{
-			if(!CheckAngle(dist, 30 * i, dir) || !CheckAngle(dist, -30 * i, dir))
+			const FTransform transform = Mesh->GetComponentTransform();
+			FVector dir = UKismetMathLibrary::TransformDirection(transform, Directions[i]);
+			
+			if(!CheckDirection(dir))
 			{
-				dir *= MaxSpeed;
-				dir -= Velocity;
-				dir = UKismetMathLibrary::ClampVectorSize(dir, 0, MaxForce);
+				resultDir = dir;
+				resultDir *= MaxSpeed;
+				resultDir -= Velocity;
+				resultDir = UKismetMathLibrary::ClampVectorSize(dir, 0, MaxForce);
 				break;
 			}
 		}
 	}
-	return dir;
+
+	return resultDir;
 }
 
-bool ABoid::CheckAngle(float dist, float angle, FVector& safeDir)
+bool ABoid::CheckDirection(const FVector& dir)
 {
 	FVector start = GetActorLocation();
-	FVector end = start + GetActorForwardVector().RotateAngleAxis(angle, FVector::UpVector) * dist;
+	FVector end = start + dir * ObstacleDistance;
 
 	FCollisionQueryParams CollisionParams;
 	FHitResult hit;
@@ -225,14 +220,7 @@ bool ABoid::CheckAngle(float dist, float angle, FVector& safeDir)
 
 	if (DrawDebug)
 	{
-		UKismetSystemLibrary::DrawDebugLine(GetWorld(), start, end, color, 0, 5);
+		UKismetSystemLibrary::DrawDebugLine(GetWorld(), start, end, color, 0, 1);
 	}
-
-	if(!result)
-	{
-		safeDir = end - start;
-		safeDir.Normalize();
-	}
-
 	return result;
 }
