@@ -21,16 +21,15 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<ABoid> BoidBP;
 	UPROPERTY(EditDefaultsOnly)
-	float Width = 2000;
-	UPROPERTY(EditDefaultsOnly)
-	float Height = 1500;
-	UPROPERTY(EditDefaultsOnly)
 	int Num = 30;
 
 	UPROPERTY(EditDefaultsOnly)
 	FVector LowerBound;
 	UPROPERTY(EditDefaultsOnly)
 	FVector UpperBound;
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FLinearColor> BoidColors;
 
 private:
 	TArray<ABoid*> Boids;

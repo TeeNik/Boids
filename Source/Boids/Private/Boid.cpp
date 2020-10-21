@@ -1,6 +1,7 @@
 #include "Boid.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 
 ABoid::ABoid()
 {
@@ -27,11 +28,16 @@ void ABoid::Run(const TArray<ABoid*>& boids)
 	Borders();
 }
 
-void ABoid::Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions)
+void ABoid::Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions, const FLinearColor& color)
 {
 	LowerBound = lowerBound;
 	UpperBound = upperBound;
 	Directions = directions;
+
+	UMaterialInstanceDynamic* MI = UMaterialInstanceDynamic::Create(Mesh->GetMaterial(0), this);
+	Mesh->SetMaterial(0, MI);
+	MI->SetVectorParameterValue(TEXT("Color"), color);
+	MI->SetVectorParameterValue(TEXT("Emissive"), color);
 }
 
 void ABoid::ApplyForce(FVector force)
@@ -64,7 +70,8 @@ void ABoid::Update()
 
 	auto position = GetActorLocation();
 	auto newPosition = position + Velocity;
-	SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
+	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(position, newPosition));
+	//SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
 	SetActorLocation(newPosition);
 	Acceleration *= 0;
 }
@@ -107,6 +114,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < SeparationDistance)
 		{
+			DrawLine(position, other->GetActorLocation());
 			FVector diff = position - other->GetActorLocation();
 			diff.Normalize();
 			diff /= d;
@@ -117,7 +125,7 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 
 	if(count > 0)
 	{
-		steer /= count;
+		steer /= (float)count;
 	}
 
 	if(steer.Size() > 0)
@@ -141,6 +149,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < AlignDistance)
 		{
+			DrawLine(position, other->GetActorLocation());
 			sum += other->Velocity;
 			++count;
 		}
@@ -149,7 +158,7 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 	FVector steer(0);
 	if(count > 0)
 	{
-		sum /= count;
+		sum /= (float)count;
 		sum.Normalize();
 		sum *= MaxSpeed;
 		steer = sum - Velocity;
@@ -169,6 +178,7 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < ApproachDistance)
 		{
+			DrawLine(position, other->GetActorLocation());
 			sum += other->GetActorLocation();
 			++count;
 		}
@@ -176,7 +186,7 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 
 	if(count > 0)
 	{
-		sum /= count;
+		sum /= (float)count;
 		return Seek(sum);
 	}
 	return FVector::ZeroVector;
@@ -223,4 +233,12 @@ bool ABoid::CheckDirection(const FVector& dir)
 		UKismetSystemLibrary::DrawDebugLine(GetWorld(), start, end, color, 0, 1);
 	}
 	return result;
+}
+
+void ABoid::DrawLine(const FVector& a, const FVector& b)
+{
+	if(DrawDebug)
+	{
+		UKismetSystemLibrary::DrawDebugLine(GetWorld(), a, b, FColor::Yellow, 0, 1);
+	}
 }
