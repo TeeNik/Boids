@@ -15,8 +15,6 @@ public:
 	void Run(const TArray<ABoid*>& boids);
 	void Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions, const FLinearColor& color);
 
-	bool DrawDebug = false;
-
 protected:
 
 	UPROPERTY(EditDefaultsOnly)
@@ -65,8 +63,6 @@ private:
 	FVector Obstacle();
 
 	bool CheckDirection(const FVector& dir);
-
-	void DrawLine(const FVector& a, const FVector& b);
 
 	FVector Velocity;
 	FVector Acceleration;

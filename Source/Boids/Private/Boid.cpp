@@ -18,7 +18,6 @@ void ABoid::BeginPlay()
 
 	Velocity = FVector(FMath::FRandRange(-1,1), FMath::FRandRange(-1, 1), FMath::FRandRange(-1, 1));
 	Velocity *= MaxSpeed;
-	//DrawDebug = true;
 }
 
 void ABoid::Run(const TArray<ABoid*>& boids)
@@ -70,8 +69,11 @@ void ABoid::Update()
 
 	auto position = GetActorLocation();
 	auto newPosition = position + Velocity;
-	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(position, newPosition));
-	//SetActorRotation(UKismetMathLibrary::MakeRotFromX(newPosition - position));
+
+	FVector dir = newPosition - position;
+	dir.Normalize();
+	SetActorRotation(FMath::Lerp(GetActorRotation(), dir.Rotation(), 0.05f));
+	
 	SetActorLocation(newPosition);
 	Acceleration *= 0;
 }
@@ -114,7 +116,6 @@ FVector ABoid::Separate(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < SeparationDistance)
 		{
-			DrawLine(position, other->GetActorLocation());
 			FVector diff = position - other->GetActorLocation();
 			diff.Normalize();
 			diff /= d;
@@ -149,7 +150,6 @@ FVector ABoid::Align(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < AlignDistance)
 		{
-			DrawLine(position, other->GetActorLocation());
 			sum += other->Velocity;
 			++count;
 		}
@@ -178,7 +178,6 @@ FVector ABoid::Cohesion(const TArray<ABoid*>& boids)
 		float d = FVector::Dist(position, other->GetActorLocation());
 		if(d > 0 && d < ApproachDistance)
 		{
-			DrawLine(position, other->GetActorLocation());
 			sum += other->GetActorLocation();
 			++count;
 		}
@@ -225,20 +224,5 @@ bool ABoid::CheckDirection(const FVector& dir)
 	FCollisionQueryParams CollisionParams;
 	FHitResult hit;
 
-	bool result = GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_WorldStatic, CollisionParams);
-	FColor color = result ? FColor::Red : FColor::Green;
-
-	if (DrawDebug)
-	{
-		UKismetSystemLibrary::DrawDebugLine(GetWorld(), start, end, color, 0, 1);
-	}
-	return result;
-}
-
-void ABoid::DrawLine(const FVector& a, const FVector& b)
-{
-	if(DrawDebug)
-	{
-		UKismetSystemLibrary::DrawDebugLine(GetWorld(), a, b, FColor::Yellow, 0, 1);
-	}
+	return GetWorld()->LineTraceSingleByChannel(hit, start, end, ECC_WorldStatic, CollisionParams);
 }

@@ -23,10 +23,10 @@ protected:
 	UPROPERTY(EditDefaultsOnly)
 	int Num = 30;
 
-	UPROPERTY(EditDefaultsOnly)
-	FVector LowerBound;
-	UPROPERTY(EditDefaultsOnly)
-	FVector UpperBound;
+	UPROPERTY(EditAnywhere)
+	AActor* UpperBound;
+	UPROPERTY(EditAnywhere)
+	AActor* LowerBound;
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FLinearColor> BoidColors;

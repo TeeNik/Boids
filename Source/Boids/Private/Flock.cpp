@@ -15,24 +15,21 @@ void AFlock::BeginPlay()
 	FActorSpawnParameters spawnParameters;
 	spawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
+	FVector lower = LowerBound->GetActorLocation();
+	FVector upper = UpperBound->GetActorLocation();
+
 	for(int i = 0; i < Num; ++i)
 	{
-		FVector pos = FVector(FMath::FRandRange(LowerBound.X, UpperBound.X),
-			FMath::FRandRange(LowerBound.Y, UpperBound.Y),
-			FMath::FRandRange(LowerBound.Z, UpperBound.Z));
+		FVector pos = FVector(FMath::FRandRange(lower.X, upper.X),
+			FMath::FRandRange(lower.Y, upper.Y),
+			FMath::FRandRange(lower.Z, upper.Z));
 
 		FLinearColor color = BoidColors[FMath::RandRange(0, BoidColors.Num() - 1)];
 
 		ABoid* boid = GetWorld()->SpawnActor<ABoid>(BoidBP, pos, FRotator(), spawnParameters);
-		boid->Setup(LowerBound, UpperBound, Directions, color);
-		//boid->DrawDebug = true;
+		boid->Setup(lower, upper, Directions, color);
 		Boids.Add(boid);
 	}
-
-	//if(Boids.Num())
-	//{
-	//	Boids[0]->DrawDebug = true;
-	//}
 }
 
 void AFlock::Tick(float DeltaTime)
