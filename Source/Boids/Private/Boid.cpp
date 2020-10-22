@@ -20,10 +20,10 @@ void ABoid::BeginPlay()
 	Velocity *= MaxSpeed;
 }
 
-void ABoid::Run(const TArray<ABoid*>& boids)
+void ABoid::Run(const TArray<ABoid*>& boids, float deltaTime)
 {
 	Flock(boids);
-	Update();
+	Update(deltaTime);
 	Borders();
 }
 
@@ -62,9 +62,9 @@ void ABoid::Flock(const TArray<ABoid*>& boids)
 	ApplyForce(obs);
 }
 
-void ABoid::Update()
+void ABoid::Update(float deltaTime)
 {
-	Velocity += Acceleration;
+	Velocity += Acceleration * deltaTime * 10;
 	Velocity = UKismetMathLibrary::ClampVectorSize(Velocity, 0, MaxSpeed);
 
 	auto position = GetActorLocation();

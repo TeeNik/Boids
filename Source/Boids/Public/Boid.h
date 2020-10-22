@@ -12,7 +12,7 @@ class BOIDS_API ABoid : public AActor
 public:	
 	ABoid();
 
-	void Run(const TArray<ABoid*>& boids);
+	void Run(const TArray<ABoid*>& boids, float deltaTime);
 	void Setup(FVector lowerBound, FVector upperBound, const TArray<FVector>& directions, const FLinearColor& color);
 
 protected:
@@ -53,7 +53,7 @@ protected:
 private:
 	void ApplyForce(FVector force);
 	void Flock(const TArray<ABoid*>& boids);
-	void Update();
+	void Update(float deltaTime);
 
 	FVector Seek(FVector target);
 	void Borders();

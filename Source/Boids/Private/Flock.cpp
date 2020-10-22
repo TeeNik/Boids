@@ -38,7 +38,7 @@ void AFlock::Tick(float DeltaTime)
 
 	for (ABoid* boid : Boids)
 	{
-		boid->Run(Boids);
+		boid->Run(Boids, DeltaTime);
 	}
 }
 
